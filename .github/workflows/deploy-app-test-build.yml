@@ -1,0 +1,70 @@
+name: deploy-app-test - Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - main
+    paths:
+      - "deploy-app-test/**"
+      - ".github/workflows/deploy-app-test-build.yml"
+  workflow_dispatch:
+
+jobs:
+  details:
+      name: Details
+      runs-on: ubuntu-latest # Use for short tasks so dependencies are already available.
+      concurrency:
+        group: details-${{ github.workflow }}-${{ github.ref }}
+        cancel-in-progress: true
+      outputs:
+        version: ${{ env.VERSION }}
+      steps:
+        - name: Version
+          uses: greggbjensen/prdeploy/.github/actions/date-version@main
+
+        - name: Build details
+          uses: greggbjensen/prdeploy/.github/actions/build-details@main
+          with:
+            version: ${{ env.VERSION }}
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build
+    runs-on: ["self-hosted", "Linux", "X64", "eks"]
+    needs:
+      - details
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Cache node modules
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: deploy-app-test/node_modules
+          key: ${{ runner.os }}-build-node_modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install NPM Dependencies
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        working-directory: deploy-app-test
+        run: npm ci
+
+      - name: Build app
+        working-directory: deploy-app-test
+        run: npm run build

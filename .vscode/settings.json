@@ -1,0 +1,31 @@
+{
+  "editor.tabSize": 2,
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "[typescript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+      "editor.tabSize": 2
+  },
+  "[yml]": {
+      "editor.tabSize": 2
+  },
+  "editor.detectIndentation": false,
+  "editor.indentSize": "tabSize",
+  "jest.runMode": "deferred",
+  "prettier.ignorePath": "apps/github-pr-deploy/.prettierignore",
+  "prettier.prettierPath": "apps/github-pr-deploy/node_modules/prettier/index.cjs",
+  "prettier.configPath": "apps/github-pr-deploy/.prettierrc",
+  "prettier.singleQuote": true,
+  "search.exclude": {
+    "**/dist": true,
+    "**/package-lock.json": true
+  }
+}
+

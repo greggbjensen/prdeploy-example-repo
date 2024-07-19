@@ -1,0 +1,68 @@
+name: deploy-api-test - Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - main
+    paths:
+      - "deploy-api-test/**"
+      - ".github/workflows/deploy-api-test-build.yml"
+  workflow_dispatch:
+
+jobs:
+  details:
+      name: Details
+      runs-on: ubuntu-latest # Use for short tasks so dependencies are already available.
+      concurrency:
+        group: details-${{ github.workflow }}-${{ github.ref }}
+        cancel-in-progress: true
+      outputs:
+        version: ${{ env.VERSION }}
+      steps:
+        - name: Version
+          uses: greggbjensen/prdeploy/.github/actions/date-version@main
+
+        - name: Build details
+          uses: greggbjensen/prdeploy/.github/actions/build-details@main
+          with:
+            version: ${{ env.VERSION }}
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build
+    runs-on: ["self-hosted", "Linux", "X64", "eks"]
+    needs:
+      - details
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+      DOTNET_INSTALL_DIR: '~/.dotnet'
+      BUILD_CONFIGURATION: Release
+      VERSION: ${{ needs.details.outputs.version }}
+    defaults:
+      run:
+        working-directory: deploy-api-test
+    steps:
+      - name: Install .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Restore dependencies
+        run: dotnet restore -maxcpucount:2
+
+      - name: Build
+        run: dotnet build --configuration $BUILD_CONFIGURATION --no-restore -p:Version=$VERSION -maxcpucount:2

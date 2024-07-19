@@ -1,0 +1,7 @@
+builds:
+  checkPattern: 'Build$'
+slack:
+  notificationsEnabled: true
+  channels:
+    deploy: 'DEPLOY_SLACK_WEBHOOK_URL'
+    release: 'RELEASE_SLACK_WEBHOOK_URL'

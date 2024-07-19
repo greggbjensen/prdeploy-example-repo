@@ -1,0 +1,71 @@
+name: "Combined Deploy"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_number:
+        description: 'Pull request number'
+        type: string
+        required: false
+      environment:
+        type: choice
+        description: 'Deploy environment'
+        options:
+        - dev
+        - stage
+        - prod
+      deploy_run_ids:
+        description: 'IDs of builds to deploy'
+        type: string
+        required: true
+      sync_run_ids:
+        description: 'IDs of builds to sync'
+        type: string
+        required: false
+      deploy_name:
+        description: 'Deploy run name (automated)'
+        type: string
+        required: true
+
+run-name: ${{ inputs.deploy_name && inputs.deploy_name || format('{0} ({1})', github.ref_name, inputs.environment) }}
+
+jobs:
+  deploy_info:
+    name: Deploy Info
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-info-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    outputs:
+      branch: ${{ steps.build_info.outputs.branch }}
+      builds_matrix_json: ${{ steps.build_info.outputs.builds_matrix_json }}
+      builds_json: ${{ steps.build_info.outputs.builds_json }}
+    steps:
+      - name: Get build info
+        id: build_info
+        uses: greggbjensen/prdeploy/.github/actions/get-build-info@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull_number: ${{ inputs.pull_number }}
+          deploy_run_ids: ${{ inputs.deploy_run_ids }}
+          sync_run_ids: ${{ inputs.sync_run_ids }}
+
+  deploy:
+    name: ${{ matrix.build_name }}
+    needs:
+      - deploy_info
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build_name: ${{ fromJson(needs.deploy_info.outputs.builds_matrix_json) }}
+    concurrency:
+      group: "${{ github.workflow }}-${{ inputs.environment }}-deploy-${{ matrix.build_name }}"
+      cancel-in-progress: true
+    outputs:
+      builds_json: ${{ needs.deploy_info.outputs.builds_json }}
+      builds_matrix_json: ${{ needs.deploy_info.outputs.builds_matrix_json }}
+    steps:
+      - name: Deploy
+        run: |
+          echo "Deloying ${{ matrix.build_name }} to ${{ inputs.environment }}."
