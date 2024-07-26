@@ -1,0 +1,4 @@
+builds:
+  checkPattern: 'Build$'
+slack:
+  notificationsEnabled: true
