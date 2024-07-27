@@ -3,4 +3,4 @@ builds:
 jira:
   addIssuesEnabled: true
 slack:
-  notificationsEnabled: false
+  notificationsEnabled: true
