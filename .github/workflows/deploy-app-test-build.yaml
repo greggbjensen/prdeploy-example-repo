@@ -1,9 +1,6 @@
 name: deploy-app-test - Build
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types:
       - opened
