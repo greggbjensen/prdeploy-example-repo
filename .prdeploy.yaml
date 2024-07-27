@@ -1,0 +1,6 @@
+builds:
+  checkPattern: 'Build$'
+jira:
+  addIssuesEnabled: true
+slack:
+  notificationsEnabled: false
