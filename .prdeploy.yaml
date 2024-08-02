@@ -4,3 +4,6 @@ jira:
   addIssuesEnabled: true
 slack:
   notificationsEnabled: true
+services:
+  - name: deploy-api-test
+  - name: deploy-app-test
