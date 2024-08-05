@@ -1,3 +1,4 @@
+defaultBranch: main
 builds:
   checkPattern: 'Build$'
 jira:
